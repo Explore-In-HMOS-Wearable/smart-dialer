@@ -1,0 +1,10 @@
+{
+  "routerMap": [
+    {
+      "name": "ContactDetail",
+      "pageSourceFile": "src/main/ets/pages/ContactDetail.ets",
+      "buildFunction": "ContactDetailBuilder",
+      "data": { "description": "contact detail" }
+    }
+  ]
+}

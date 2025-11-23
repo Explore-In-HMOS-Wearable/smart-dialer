@@ -1,9 +1,7 @@
 import { common, abilityAccessCtrl, Permissions } from '@kit.AbilityKit';
 import { contact } from '@kit.ContactsKit';
 import { BusinessError } from '@kit.BasicServicesKit';
-import { ArcList, ArcListItem, router, ArcListAttribute, ArcListItemAttribute } from '@kit.ArkUI';
-
-
+import { ArcList, ArcListItem, ArcListAttribute, ArcListItemAttribute } from '@kit.ArkUI';
 
 import {
   LengthMetrics,
@@ -22,6 +20,13 @@ interface AddedContactRow {
   phone: string;
   isLocal: boolean | null;
 }
+export interface ContactDetailParam {
+  id: number;
+  name: string;
+  phone: string;
+  isLocal: boolean | null;
+}
+
 
 interface ContactWithOptionalIdKey {
   id?: number;
@@ -36,12 +41,10 @@ interface AddContactResult {
 @CustomDialog
 struct AddContactDialog {
   controller?: CustomDialogController
-
   name: string = ''
   phone: string = ''
-
-
-  onConfirm: (name: string, phone: string) => void = () => {}
+  onConfirm: (name: string, phone: string) => void = () => {
+  }
 
   private close() {
     this.controller?.close()
@@ -70,16 +73,16 @@ struct AddContactDialog {
   }
 }
 
+
 @Entry
 @Component
-struct Contact {
-
+struct Index {
+  pageInfos: NavPathStack = new NavPathStack(); // <<< EKLENDİ
   topOptions: ArcButtonOptions = new ArcButtonOptions({});
   @State isLoading: boolean = false;
   scroller: Scroller = new Scroller()
   screenW: number = 360;
   screenH: number = 360;
-
   dialogController: CustomDialogController | null = null
 
   aboutToAppear(): void {
@@ -116,10 +119,58 @@ struct Contact {
       height: this.screenH,
       cornerRadius: 0,
       backgroundColor: Color.Transparent,
-      shadow: { radius: 0, color: Color.Transparent, offsetX: 0, offsetY: 0 }
+      shadow: {
+        radius: 0,
+        color: Color.Transparent,
+        offsetX: 0,
+        offsetY: 0
+      }
     });
 
     this.listContact();
+  }
+
+  private addContactByPermissionsWith(name: string, phone: string) {
+    const ctx = this.hostCtx();
+    const permissions: Array<Permissions> = ['ohos.permission.WRITE_CONTACTS'];
+    const info: contact.Contact = {
+      name: { fullName: name || 'Unnamed' },
+      phoneNumbers: [{ phoneNumber: phone || '' }]
+    };
+
+    abilityAccessCtrl.createAtManager().requestPermissionsFromUser(ctx, permissions).then(() => {
+      try {
+        contact.addContact(ctx, info, (err: BusinessError, data: number) => {
+          if (err) {
+            console.error(`addContact error: ${err.code} - ${err.message}`);
+            return;
+          }
+          const id: number = data;
+          const row: AddedContactRow = {
+            id,
+            name: info.name?.fullName ?? '',
+            phone: info.phoneNumbers?.[0]?.phoneNumber ?? '',
+            isLocal: null
+          };
+          this.addedContacts = [row, ...this.addedContacts];
+        });
+      } catch (e) {
+        const be = e as BusinessError;
+        console.error(`addContact try/catch: ${be.code} - ${be.message}`);
+      }
+    });
+  }
+
+  private ui(): UIContext {
+    const u = this.getUIContext();
+    if (!u) {
+      throw new Error('[Index] UIContext not available');
+    }
+    return u;
+  }
+
+  private hostCtx(): common.UIAbilityContext {
+    return this.ui().getHostContext() as common.UIAbilityContext;
   }
 
   aboutToDisappear() {
@@ -132,22 +183,18 @@ struct Contact {
 
   @State addedContacts: Array<AddedContactRow> = [];
 
-  private getContext(): common.UIAbilityContext {
-    return this.getUIContext().getHostContext() as common.UIAbilityContext;
-  }
-
   private async requestPerms(perms: Array<Permissions>): Promise<void> {
-    const ctx = this.getContext();
+    const ctx = this.hostCtx();
     await abilityAccessCtrl.createAtManager().requestPermissionsFromUser(ctx, perms);
   }
 
   async wipeAllContacts() {
-    const context = this.getContext();
+    const ctx = this.hostCtx();
     try {
       await this.requestPerms(['ohos.permission.READ_CONTACTS', 'ohos.permission.WRITE_CONTACTS']);
 
-      const contacts: Array<contact.Contact> = await new Promise<Array<contact.Contact>>((resolve, reject) => {
-        contact.queryContacts(context, (err: BusinessError, data: Array<contact.Contact>) => {
+      const contacts: Array<contact.Contact> = await new Promise((resolve, reject) => {
+        contact.queryContacts(ctx, (err: BusinessError, data: Array<contact.Contact>) => {
           if (err) {
             reject(err);
             return;
@@ -162,9 +209,10 @@ struct Contact {
         if (!id || Number.isNaN(id)) {
           continue;
         }
+
         try {
           await new Promise<void>((resolve, reject) => {
-            contact.deleteContact(context, id.toString(), (err: BusinessError) => {
+            contact.deleteContact(ctx, id.toString(), (err: BusinessError) => {
               if (err) {
                 reject(err);
                 return;
@@ -187,55 +235,27 @@ struct Contact {
   }
 
   addContactByPermissions() {
-    const context = this.getContext();
+    const ctx = this.hostCtx();
     const permissions: Array<Permissions> = ['ohos.permission.WRITE_CONTACTS'];
     const info: contact.Contact = {
       name: { fullName: 'Jogn Doe' },
       phoneNumbers: [{ phoneNumber: '1234567890' }]
     };
 
-    abilityAccessCtrl.createAtManager().requestPermissionsFromUser(context, permissions).then(() => {
+    abilityAccessCtrl.createAtManager().requestPermissionsFromUser(ctx, permissions).then(() => {
       try {
-        contact.addContact(context, info, (err: BusinessError, data: number) => {
+        contact.addContact(ctx, info, (err: BusinessError, data: number) => {
           if (err) {
             console.error(`addContact error: ${err.code} - ${err.message}`);
             return;
           }
           const id: number = data;
           const name: string = info.name?.fullName ?? '';
-          const phone: string = info.phoneNumbers && info.phoneNumbers.length > 0 ? info.phoneNumbers[0].phoneNumber : '';
-          const row: AddedContactRow = { id: id, name: name, phone: phone, isLocal: null };
-          this.addedContacts = [row, ...this.addedContacts];
-        });
-
-      } catch (e) {
-        const be = e as BusinessError;
-        console.error(`addContact try/catch: ${be.code} - ${be.message}`);
-      }
-    });
-  }
-
-  private addContactByPermissionsWith(name: string, phone: string) {
-    const context = this.getContext();
-    const permissions: Array<Permissions> = ['ohos.permission.WRITE_CONTACTS'];
-
-    const info: contact.Contact = {
-      name: { fullName: name || 'Unnamed' },
-      phoneNumbers: [{ phoneNumber: phone || '' }]
-    };
-
-    abilityAccessCtrl.createAtManager().requestPermissionsFromUser(context, permissions).then(() => {
-      try {
-        contact.addContact(context, info, (err: BusinessError, data: number) => {
-          if (err) {
-            console.error(`addContact error: ${err.code} - ${err.message}`);
-            return;
-          }
-          const id: number = data;
+          const phone: string = info.phoneNumbers?.[0]?.phoneNumber ?? '';
           const row: AddedContactRow = {
             id,
-            name: info.name?.fullName ?? '',
-            phone: info.phoneNumbers?.[0]?.phoneNumber ?? '',
+            name,
+            phone,
             isLocal: null
           };
           this.addedContacts = [row, ...this.addedContacts];
@@ -249,12 +269,12 @@ struct Contact {
 
   async listContact() {
     this.isLoading = true;
-    const context = this.getContext();
+    const ctx = this.hostCtx();
     try {
       await this.requestPerms(['ohos.permission.READ_CONTACTS']);
 
-      const contacts: Array<contact.Contact> = await new Promise<Array<contact.Contact>>((resolve, reject) => {
-        contact.queryContacts(context, (err: BusinessError, data: Array<contact.Contact>) => {
+      const contacts: Array<contact.Contact> = await new Promise((resolve, reject) => {
+        contact.queryContacts(ctx, (err: BusinessError, data: Array<contact.Contact>) => {
           if (err) {
             reject(err);
             return;
@@ -269,19 +289,23 @@ struct Contact {
         const id: number = (typeof t.id === 'number' && t.id > 0) ? t.id : Number(t.key ?? 0);
 
         const name: string = c.name?.fullName ?? '';
-        const phone: string =
-          (c.phoneNumbers && c.phoneNumbers.length > 0 && c.phoneNumbers[0]?.phoneNumber) ? c.phoneNumbers[0].phoneNumber : '';
+        const phone: string = c.phoneNumbers?.[0]?.phoneNumber ?? '';
 
         let isLocal: boolean | null = null;
         try {
           if (id > 0) {
-            isLocal = await contact.isLocalContact(context, id);
+            isLocal = await contact.isLocalContact(ctx, id);
           }
         } catch {
           isLocal = null;
         }
 
-        rows.push({ id: id > 0 ? id : 0, name, phone, isLocal });
+        rows.push({
+          id: id > 0 ? id : 0,
+          name,
+          phone,
+          isLocal
+        });
       }
 
       rows.sort((a, b) => a.name.localeCompare(b.name));
@@ -289,71 +313,74 @@ struct Contact {
     } catch (e) {
       const be = e as BusinessError;
       console.error(`listContact error: ${be.code} - ${be.message}`);
-    }
-    finally {
+    } finally {
       this.isLoading = false;
     }
   }
 
-
   build() {
-    Column() {
-      ArcButton({ options: this.topOptions })
+    Navigation(this.pageInfos) {
 
-      if (this.isLoading) {
-        Column() {
-          LoadingProgress()
-          Text('Loading contacts...')
-            .fontSize(14)
-            .fontColor('#666666')
-        }
-        .alignItems(HorizontalAlign.Center)
-        .justifyContent(FlexAlign.Center)
-        .height('100%')
-      } else {
 
-        ArcList({ initialIndex: 0 }) {
-          ForEach(this.addedContacts, (row: AddedContactRow) => {
-            ArcListItem() {
-              Row() {
-                Column({ space: 4 }) {
-                  Text(`${row.name} ${row.phone}`)
-                    .fontWeight(FontWeight.Medium)
-                    .fontSize(12)
+      Column() {
+        ArcButton({ options: this.topOptions })
+
+        if (this.isLoading) {
+          Column() {
+            LoadingProgress()
+            Text('Loading contacts...')
+              .fontSize(14)
+              .fontColor('#666666')
+          }
+          .alignItems(HorizontalAlign.Center)
+          .justifyContent(FlexAlign.Center)
+          .height('100%')
+        } else {
+
+          ArcList({ initialIndex: 0 }) {
+            ForEach(this.addedContacts, (row: AddedContactRow) => {
+              ArcListItem() {
+                Row() {
+                  Column({ space: 4 }) {
+                    Text(`${row.name} ${row.phone}`)
+                      .fontWeight(FontWeight.Medium)
+                      .fontSize(12)
+                  }
+                  .width('100%')
+                  .padding(8)
                 }
+                .borderRadius(8)
+                .borderWidth(1)
+                .borderColor('#F5F5F7')
+                .margin({ bottom: 8 })
+                .onClick(() => this.openContact(row))
                 .width('100%')
-                .padding(8)
               }
-              .borderRadius(8)
-              .borderWidth(1)
-              .borderColor('#F5F5F7')
-              .margin({ bottom: 8 })
-              .onClick(() => this.openContact(row))
-              .width('100%')
-            }
-            .align(Alignment.Center)
-          }, (row: AddedContactRow) => `${row.id}`)
+              .align(Alignment.Center)
+            }, (row: AddedContactRow) => `${row.id}`)
+          }
+          .width('100%')
+          .height('100%')
+          .focusable(true)
+          .focusOnTouch(true)
         }
-        .width('100%')
-        .height('100%')
-        .focusable(true)
-        .focusOnTouch(true)
       }
-    }
-    .height('100%')
-    .width('100%')
+      .height('100%')
+      .width('100%')
+    }.hideTitleBar(true)
+    .hideBackButton(true)
   }
 
+
+
   private openContact(row: AddedContactRow) {
-    router.pushUrl({
-      url: 'pages/ContactDetail',
-      params: {
-        id: row.id,
-        name: row.name,
-        phone: row.phone,
-        isLocal: row.isLocal
-      }
-    });
+    const param: ContactDetailParam = {
+      id: row.id,
+      name: row.name,
+      phone: row.phone,
+      isLocal: row.isLocal
+    };
+    this.pageInfos.pushPathByName('ContactDetail', param);
   }
 
 }

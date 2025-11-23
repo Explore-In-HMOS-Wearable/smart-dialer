@@ -1,10 +1,9 @@
 import CallDataManager from '../model/CallDataManager';
 import DefaultCallData from '../model/TypeUtils';
-import { AbilityConstant, UIAbility, Want } from '@kit.AbilityKit';
+import { AbilityConstant, UIAbility, Want, common } from '@kit.AbilityKit';
 import { hilog } from '@kit.PerformanceAnalysisKit';
 import { window } from '@kit.ArkUI';
 import { voipCall } from '@kit.CallServiceKit';
-import { common } from '@kit.AbilityKit';
 
 export default class VoipCallAbility extends UIAbility {
   onCreate(want: Want, launchParam: AbilityConstant.LaunchParam): void {

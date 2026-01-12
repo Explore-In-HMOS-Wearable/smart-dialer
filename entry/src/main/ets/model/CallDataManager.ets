@@ -17,18 +17,18 @@ export default class CallDataManager {
     let targetObj = this.callList.find((v: DefaultCallData) => v.callId === callData.callId);
     if (!targetObj) {
       this.callList.push(callData);
-      hilog.info(0x0000, 'SampleCode', 'addCall: ' + callData.callId + ', callCount: ' + this.callList.length);
+      hilog.info(0x0000, 'SampleCode', `addCall: ${callData.callId}, callCount: ${this.callList.length}`);
     }
   }
 
   public removeCallById(callId: string): void {
     let index = this.callList.findIndex((v: DefaultCallData) => v.callId === callId);
     if (index === -1) {
-      hilog.error(0x0000, 'SampleCode', 'removeCallById call not exist: ' + callId);
+      hilog.error(0x0000, 'SampleCode', `removeCallById call not exist: ${callId}`);
       return;
     }
     this.callList.splice(index, 1);
-    hilog.info(0x0000, 'SampleCode', 'removeCallById: ' + callId + ', callCount: ' + this.callList.length);
+    hilog.info(0x0000, 'SampleCode', `removeCallById: ${callId}, callCount: ${this.callList.length}`);
   }
 
   public getCallById(callId: string): DefaultCallData | undefined {
@@ -44,7 +44,7 @@ export default class CallDataManager {
     if (targetObj) {
       targetObj.callState = callState;
     } else {
-      hilog.error(0x0000, 'SampleCode', 'updateCallStateById call not exist: ' + callId);
+      hilog.error(0x0000, 'SampleCode', `updateCallStateById call not exist: ${callId}`);
     }
   }
 }

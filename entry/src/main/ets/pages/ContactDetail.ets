@@ -7,14 +7,10 @@ import { common, Want } from '@kit.AbilityKit';
 import DefaultCallData from '../model/TypeUtils';
 import { observer } from '@kit.TelephonyKit';
 import { ContactDetailParam } from './Index';
-
-
 @Builder
 export function ContactDetailBuilder(name: string, param?: Object) {
   ContactDetail();
 }
-
-
 @Component
 struct ContactDetail {
   pathStack: NavPathStack = new NavPathStack();
@@ -27,14 +23,12 @@ struct ContactDetail {
   callIdPrefix: string = '';
   callIdIndex: number = 1;
 
-
-
-
   observeEvent() {
     try {
       voipCall.on('voipCallUiEvent', (voipCallUiEventInfo) => {
-        hilog.info(0x0000, 'SampleCode', 'voipCallUiEvent: ' + voipCallUiEventInfo);
+        hilog.info(0x0000, 'SampleCode', `voipCallUiEvent: ${voipCallUiEventInfo}`);
         if (voipCallUiEventInfo?.voipCallUiEvent === voipCall.VoipCallUiEvent.VOIP_CALL_EVENT_VOICE_ANSWER) {
+
           hilog.info(0x0000, 'detailPage', 'ready to report state: %{public}s', 'answered');
           voipCall.reportCallStateChange(voipCallUiEventInfo.callId, voipCall.VoipCallState.VOIP_CALL_STATE_ANSWERED);
 
@@ -69,7 +63,7 @@ struct ContactDetail {
             result.then(() => {
               hilog.info(0x0000, 'SampleCode', 'reportCallStateChange to active success');
             }).catch((error: BusinessError) => {
-              hilog.error(0x0000, 'SampleCode', 'reportCallStateChange to active error code: ' + error.code);
+              hilog.error(0x0000, 'SampleCode', `reportCallStateChange to active error code: ${error.code}`);
             });
             CallDataManager.getInstance()
               .updateCallStateById(voipCallUiEventInfo.callId, voipCall.VoipCallState.VOIP_CALL_STATE_ACTIVE);
@@ -87,7 +81,7 @@ struct ContactDetail {
             result.then(() => {
               hilog.info(0x0000, 'SampleCode', 'reportCallStateChange to disconnected success');
             }).catch((error: BusinessError) => {
-              hilog.error(0x0000, 'SampleCode', 'reportCallStateChange to disconnected error code: ' + error.code);
+              hilog.error(0x0000, 'SampleCode', `reportCallStateChange to disconnected error code: ${error.code}`);
             });
             CallDataManager.getInstance().removeCallById(voipCallUiEventInfo.callId);
           }, 100);
@@ -103,7 +97,7 @@ struct ContactDetail {
             result.then(() => {
               hilog.info(0x0000, 'SampleCode', 'reportCallStateChange to disconnected success');
             }).catch((error: BusinessError) => {
-              hilog.error(0x0000, 'SampleCode', 'reportCallStateChange to disconnected error code: ' + error.code);
+              hilog.error(0x0000, 'SampleCode', `reportCallStateChange to disconnected error code: ${error.code}`);
             });
             CallDataManager.getInstance().removeCallById(voipCallUiEventInfo.callId);
           }, 100);
@@ -115,7 +109,7 @@ struct ContactDetail {
           result.then(() => {
             hilog.info(0x0000, 'SampleCode', 'reportCallAudioEventChange mute event success');
           }).catch((error: BusinessError) => {
-            hilog.error(0x0000, 'SampleCode', 'reportCallAudioEventChange mute event error code: ' + error.code);
+            hilog.error(0x0000, 'SampleCode', `reportCallAudioEventChange mute event error code: ${error.code}`);
           });
           AppStorage.setOrCreate('voipCallMuteState', true);
         } else if (voipCallUiEventInfo?.voipCallUiEvent ===
@@ -126,7 +120,7 @@ struct ContactDetail {
           result.then(() => {
             hilog.info(0x0000, 'SampleCode', 'reportCallAudioEventChange unmute event success');
           }).catch((error: BusinessError) => {
-            hilog.error(0x0000, 'SampleCode', 'reportCallAudioEventChange unmute event error code: ' + error.code);
+            hilog.error(0x0000, 'SampleCode', `reportCallAudioEventChange unmute event error code: ${error.code}`);
           });
           AppStorage.setOrCreate('voipCallMuteState', false);
         } else if (voipCallUiEventInfo?.voipCallUiEvent === voipCall.VoipCallUiEvent.VOIP_CALL_EVENT_SPEAKER_ON) {
@@ -136,18 +130,18 @@ struct ContactDetail {
         }
       });
     } catch (err) {
-      hilog.error(0x0000, 'SampleCode', 'voipCallUiEvent on error: ' + err);
+      hilog.error(0x0000, 'SampleCode', `voipCallUiEvent on error: ${err}`);
     }
   }
 
   observeCallState() {
     observer.on('callStateChange', (data) => {
-      hilog.info(0x0000, 'SampleCode', 'callStateChange: ' + JSON.stringify(data));
+      hilog.info(0x0000, 'SampleCode', `callStateChange: ${JSON.stringify(data)}`);
     })
   }
 
   build() {
-    NavDestination() { // <<< NavDestination KULLAN
+    NavDestination() {
 
       Column({ space: 12 }) {
 
@@ -171,7 +165,7 @@ struct ContactDetail {
             };
             let result = voipCall.reportOutgoingCall(voipCallAttribute);
             result.then((errorReason: voipCall.ErrorReason) => {
-              hilog.info(0x0000, 'SampleCode', 'reportOutgoingCall errorReason: ' + errorReason);
+              hilog.info(0x0000, 'SampleCode', `reportOutgoingCall errorReason: ${errorReason}`);
               if (errorReason === voipCall.ErrorReason.ERROR_NONE) {
                 CallDataManager.getInstance()
                   .addCall({
@@ -193,7 +187,7 @@ struct ContactDetail {
                 this.handleDialingCallTimeout(this.callId);
               }
             }).catch((error: BusinessError) => {
-              hilog.error(0x0000, 'SampleCode', 'reportOutgoingCall error code: ' + error.code);
+              hilog.error(0x0000, 'SampleCode', `reportOutgoingCall error code: ${error.code}`);
             });
           })
 
@@ -227,7 +221,7 @@ struct ContactDetail {
     // Automatic timeout after 60s.
     setTimeout((callId: string) => {
       let callData: DefaultCallData | undefined = CallDataManager.getInstance().getCallById(callId);
-      hilog.info(0x0000, 'SampleCode', 'handleDialingCallTimeout callId: ' + callId + ', callData: ' + callData);
+      hilog.info(0x0000, 'SampleCode', `handleDialingCallTimeout callId: ${callId}, callData: ${callData}`);
       if (!callData || callData.callState !== voipCall.VoipCallState.VOIP_CALL_STATE_DIALING) {
         return;
       }
@@ -237,7 +231,7 @@ struct ContactDetail {
       result.then(() => {
         hilog.info(0x0000, 'SampleCode', 'reportCallStateChange to disconnected success');
       }).catch((error: BusinessError) => {
-        hilog.error(0x0000, 'SampleCode', 'reportCallStateChange to disconnected error: ' + error.code);
+        hilog.error(0x0000, 'SampleCode', `reportCallStateChange to disconnected error: ${error.code}`);
       });
       CallDataManager.getInstance().removeCallById(callId);
     }, 60000, callId);

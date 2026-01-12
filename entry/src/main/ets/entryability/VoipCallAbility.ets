@@ -7,17 +7,17 @@ import { voipCall } from '@kit.CallServiceKit';
 
 export default class VoipCallAbility extends UIAbility {
   onCreate(want: Want, launchParam: AbilityConstant.LaunchParam): void {
-    hilog.info(0x0000, 'VoipCallAbility', '%{public}s', 'Ability onCreate: ' + want.parameters);
+    hilog.info(0x0000, 'VoipCallAbility', '%{public}s', `Ability onCreate: ${want.parameters}`);
     AppStorage.setOrCreate<common.UIAbilityContext>('VoipCallAbilityContext', this.context);
     if (want.parameters?.VoIPCallId) {
-      this.handleWantCallId(want.parameters?.VoIPCallId + '');
+      this.handleWantCallId(`${want.parameters?.VoIPCallId}`);
     }
   }
 
   onNewWant(want: Want, launchParam: AbilityConstant.LaunchParam): void {
-    hilog.info(0x0000, 'VoipCallAbility', '%{public}s', 'Ability onNewWant: ' + want.parameters);
+    hilog.info(0x0000, 'VoipCallAbility', '%{public}s', `Ability onNewWant: ${want.parameters}`);
     if (want.parameters?.VoIPCallId) {
-      this.handleWantCallId(want.parameters?.VoIPCallId + '');
+      this.handleWantCallId(`${want.parameters?.VoIPCallId}`);
     }
   }
 
@@ -31,7 +31,8 @@ export default class VoipCallAbility extends UIAbility {
 
     windowStage.loadContent('pages/VoipCallPage', (err) => {
       if (err.code) {
-        hilog.error(0x0000, 'VoipCallAbility', 'Failed to load the content. Cause: %{public}s, err.code: ', err.code ?? '');
+        hilog.error(0x0000, 'VoipCallAbility', 'Failed to load the content. Cause: %{public}s, err.code: ',
+          err.code ?? '');
         return;
       }
       hilog.info(0x0000, 'VoipCallAbility', 'Succeeded in loading the content.');
@@ -60,7 +61,8 @@ export default class VoipCallAbility extends UIAbility {
     if (currentCallData &&
       currentCallData.callState === voipCall.VoipCallState.VOIP_CALL_STATE_ACTIVE &&
       currentCallData.callId !== callId) {
-      hilog.info(0x0000, 'VoipCallAbility', '%{public}s exist and not disconnect, no need handle', currentCallData?.callId);
+      hilog.info(0x0000, 'VoipCallAbility', '%{public}s exist and not disconnect, no need handle',
+        currentCallData?.callId);
       return;
     }
     let callData: DefaultCallData | undefined = CallDataManager.getInstance().getCallById(callId);
@@ -70,7 +72,7 @@ export default class VoipCallAbility extends UIAbility {
       AppStorage.setOrCreate('voipCallState', callData.callState);
       AppStorage.setOrCreate('voipCallType', callData.callType);
       AppStorage.setOrCreate('isVoiceAnswerSupported', callData.isVoiceAnswerSupported);
-      hilog.info(0x0000, 'SampleCode', 'set isVoiceAnswerSupported = ' + callData.isVoiceAnswerSupported);
+      hilog.info(0x0000, 'SampleCode', `set isVoiceAnswerSupported = ${callData.isVoiceAnswerSupported}`);
     } else {
       hilog.error(0x0000, 'VoipCallAbility', '%{public}s not exist, no need update', callId);
     }

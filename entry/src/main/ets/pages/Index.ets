@@ -11,7 +11,7 @@ import {
   ArcButtonStatus,
   ArcButtonStyleMode,
   ArcButtonPosition,
-  display,
+  display
 } from '@kit.ArkUI';
 
 interface AddedContactRow {
